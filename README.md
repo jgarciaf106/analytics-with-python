@@ -1,2 +1,8 @@
-# hr-analytics
-hr-analytics
+HR Analytics Python - Jupiter - SQL Version Control
+==============================
+
+Project Organization
+------------
+
+
+--------
