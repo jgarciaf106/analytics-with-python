@@ -4,8 +4,10 @@
 !.gitignore
 !*.py
 !*.txt
+!*.sql
 
 # ...even if they are in subdirectories
+!*/
 
 # track readme.md in the root (i.e. do NOT ignore it)
 !README.md
