@@ -9,5 +9,8 @@
 # ...even if they are in subdirectories
 !*/
 
+# ignore folders
+PBI/
+
 # track readme.md in the root (i.e. do NOT ignore it)
 !README.md
