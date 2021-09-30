@@ -1,10 +1,13 @@
 # ignore all files starting with .
-.*
+*
 
 # track this file .gitignore (i.e. do NOT ignore it)
 !.gitignore
 !*.py
-!*.sql
+!*.txt
+
+# ...even if they are in subdirectories
+!*/
 
 # track readme.md in the root (i.e. do NOT ignore it)
 !README.md
