@@ -6,7 +6,6 @@
 !*.txt
 
 # ...even if they are in subdirectories
-/PBI/*
 
 # track readme.md in the root (i.e. do NOT ignore it)
 !README.md
