@@ -1,10 +1,11 @@
 HR Analytics Python - Jupiter - SQL Version Control
 ==============================
 
-Project Organization
+Folder Structure
 ------------
-Jupyter Notebooks
-    Credentials
-    Library
-    Queries
+- Python_Analysis    
+    - Credentials
+    - Library
+    - Notebooks
+    - Queries
 --------
