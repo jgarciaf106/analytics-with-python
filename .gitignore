@@ -1,16 +1,12 @@
-# ignore all files starting with .
+# ignore all files and folder starting with .
 *
-
 # track this file .gitignore (i.e. do NOT ignore it)
 !.gitignore
 !*.py
 !*.txt
 
 # ...even if they are in subdirectories
-!*/
-
-# ignore folders
-PBI/
+!Python_Analysis/
 
 # track readme.md in the root (i.e. do NOT ignore it)
 !README.md
