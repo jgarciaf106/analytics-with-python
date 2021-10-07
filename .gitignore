@@ -5,6 +5,7 @@
 !*.py
 !*.txt
 !*.sql
+!*.pptx
 
 # ...even if they are in subdirectories
 !*/
