@@ -39,7 +39,7 @@ class Get_Data:
         self.__db_type = db_type
         self.__db_name = db_name
         self.__request_from = request_from
-        self.__credentials = db_type
+        self.__credentials = db_type 
         self.__output_path = None
         self.__query_path = None
         self.__input_path = None
@@ -339,7 +339,7 @@ class Get_Data:
             
     def ppt_export(self, file_type, org=None):
 
-         # determine output file HPI Total or L1 Org Dashboard
+        # determine output file HPI Total or L1 Org Dashboard
         if file_type == "HPI":
             output_file = "HPI DEI Dashboard {0} {1}".format(
                 self.__current_quarter, self.__fiscal_quarter

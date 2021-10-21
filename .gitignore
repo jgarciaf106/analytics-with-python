@@ -5,7 +5,7 @@
 !*.py
 !*.txt
 !*.sql
-!*.pptx
+!nb_template.ipynb
 
 # ...even if they are in subdirectories
 !*/

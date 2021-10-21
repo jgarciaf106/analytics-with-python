@@ -13,12 +13,13 @@ SELECT
 	S."Is Professional",
 	S."Is New Hire",
 	S."Management Level Category",
+	S."Management Level",
 	SUM(S."Headcount") AS "HC",
 	SUM(S."Voluntary Attrition") AS "Voluntary Attrits"
 FROM (
 	-- HC SELECT
 	SELECT 
-		WD."Report Date",
+		Date(WD."Report Date") As "Report Date",
 		COALESCE(F1."Business Lvl 1 (Group) Code",WD."Business Lvl 1 (Group) Code") AS "Hybrid L1",
 		COALESCE(F2."Business Lvl 2 (Unit) Code",WD."Business Lvl 2 (Unit) Code") AS "Hybrid L2",
 
@@ -97,8 +98,8 @@ FROM (
 			WHEN WD."Original Hire Date" > '2020-10-31' OR WD."Hire Date" > '2020-10-31' THEN 'Yes'
 			ELSE 'No'
 		END AS "Is New Hire",
-		WD."Management Level Category",
-
+		WD."Management Level Category",		
+		WD."Management Level",
 		CASE
 			WHEN WD."Worker Reg / Temp Code" = 'R' AND WD."Worker Status Category Code" = 'A' THEN 1
 			ELSE 0
@@ -117,21 +118,21 @@ FROM (
 	LEFT JOIN "FEDL2" AS F2 ON F2."Business Lvl 4 (MRU) Code" = WD."Business Lvl 4 (MRU) Code"
 	LEFT JOIN "FEDL3" AS F3 ON F3."Business Lvl 4 (MRU) Code" = WD."Business Lvl 4 (MRU) Code"
 	LEFT JOIN "TECHNICAL_JOBS" AS TT ON TT."Job Family Code" = WD."Job Family Code"
-	LEFT JOIN "HPW_VETERANS" AS VET ON VET."Report Date" = WD."Report Date" AND VET."Employee ID" = WD."Worker ID" AND VET."Veteran Status" = 'Y'
+	LEFT JOIN "HPW_VETERANS_STG" AS VET ON VET."Report Date" = WD."Report Date" AND VET."Employee ID" = WD."Worker ID" AND VET."Veteran Status" = 'Y'
 	LEFT JOIN "HPW_W_DISABILITIES" AS PWD ON PWD."Employee ID" = WD."Worker ID" AND PWD."Report Date" = (Select Max("Report Date") From "HPW_W_DISABILITIES")
 
 	WHERE 
-		WD."Report Date" > (Select Max("Report Date") - interval '1 year' From "HPW_DATA")
-		AND WD."Worker Reg / Temp Code" = 'R'
+		WD."Worker Reg / Temp Code" = 'R'
 		AND WD."Worker Status Category Code" = 'A'
-		AND WD."Business Lvl 4 (MRU) Code" <> 'G034'
-		AND NOT (WD."Business Lvl 1 (Group) Code" = 'OPER' AND WD."Work Address - City" = 'Pantnagar')
 	
 	UNION ALL 
 	
 	-- Attrition Select
 	SELECT 
-		date_trunc('month', WD."Termination Date") + interval '1 month' - interval '1 day' AS "Report Date",
+		Case 
+			When Date(date_trunc('month', WD."Termination Date") + interval '1 month' - interval '1 day') >= '2021-10-01' Then Date(WD."Report Date")
+			Else Date(date_trunc('month', WD."Termination Date") + interval '1 month' - interval '1 day')
+		End AS "Report Date",
 		COALESCE(F1."Business Lvl 1 (Group) Code",WD."Business Lvl 1 (Group) Code") AS "Hybrid L1",
 		COALESCE(F2."Business Lvl 2 (Unit) Code",WD."Business Lvl 2 (Unit) Code") AS "Hybrid L2",
 	
@@ -210,7 +211,7 @@ FROM (
 			ELSE 'No'
 		END AS "Is New Hire",
 		WD."Management Level Category",
-	
+		WD."Management Level",
 		CASE
 			WHEN WD."Worker Reg / Temp Code" = 'R' AND WD."Worker Status Category Code" = 'A' THEN 1
 			ELSE 0
@@ -223,7 +224,7 @@ FROM (
 		'Attrition' AS "Type"
 	FROM "HPW_DAILY" AS WD
 	
-		INNER JOIN "HPW_ATTRITION" AS AD ON AD."Report Date" = WD."Report Date" AND AD."Worker ID" = WD."Worker ID"
+		INNER JOIN "HPW_ATTRITION_STG" AS AD ON AD."Report Date" = WD."Report Date" AND AD."Worker ID" = WD."Worker ID"
 		INNER JOIN "HPI_ORGS" AS HP ON HP."Business Lvl 1 (Group) Code" = WD."Business Lvl 1 (Group) Code"
 		LEFT JOIN "JOB_FUNCTION" AS JF ON JF."Job Family Group" = WD."Job Family Group"
 		LEFT JOIN "LABOR_PYRAMID" AS LP ON LP."Management Level" = WD."Management Level"
@@ -231,12 +232,13 @@ FROM (
 		LEFT JOIN "FEDL2" AS F2 ON F2."Business Lvl 4 (MRU) Code" = WD."Business Lvl 4 (MRU) Code"
 		LEFT JOIN "FEDL3" AS F3 ON F3."Business Lvl 4 (MRU) Code" = WD."Business Lvl 4 (MRU) Code"
 		LEFT JOIN "TECHNICAL_JOBS" AS TT ON TT."Job Family Code" = WD."Job Family Code"
-		LEFT JOIN "HPW_VETERANS" AS VET ON VET."Report Date" = WD."Report Date"	AND VET."Employee ID" = WD."Worker ID"	AND VET."Veteran Status" = 'Y'
+		LEFT JOIN "HPW_VETERANS_STG" AS VET ON VET."Report Date" = date_trunc('month', WD."Termination Date") + interval '1 month' - interval '1 day'	AND VET."Employee ID" = WD."Worker ID"	AND VET."Veteran Status" = 'Y'
 		LEFT JOIN "HPW_W_DISABILITIES" AS PWD ON PWD."Employee ID" = WD."Worker ID" AND PWD."Report Date" = (Select Max("Report Date") From "HPW_W_DISABILITIES")
-	WHERE 
-		date_trunc('month', WD."Termination Date") + interval '1 month' - interval '1 day' > (Select Max("Report Date") - interval '1 year' From "HPW_DATA")
-		AND WD."Business Lvl 4 (MRU) Code" <> 'G034'
-		AND NOT (WD."Business Lvl 1 (Group) Code" = 'OPER'AND WD."Work Address - City" = 'Pantnagar')
+	WHERE
+		date_trunc('month', WD."Termination Date") + interval '1 month' - interval '1 day' > (Select Max(Date(date_trunc('month', "Report Date") + interval '1 month' - interval '1 day' - interval '1 year')) From "HPW_DAILY") 
+	AND 
+		WD."Worker Reg / Temp Code" = 'R'
+
 ) AS S
 GROUP BY 
 	S."Report Date",	
@@ -252,7 +254,8 @@ GROUP BY
 	S."Gender Code",
 	S."Is Professional",
 	S."Is New Hire",
-	S."Management Level Category"
+	S."Management Level Category",
+	S."Management Level"
 ORDER BY 
 	S."Report Date",	
 	S."Hybrid L1",

@@ -1,5 +1,5 @@
 WITH queryDate (vGDate) as (
-   values (to_date('2021-08-31', 'YYYY-MM-DD'))
+   values (to_date('2021-09-30', 'YYYY-MM-DD'))
 )
 Select
     D."Table",
