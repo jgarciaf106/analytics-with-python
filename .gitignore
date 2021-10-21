@@ -6,6 +6,7 @@
 !*.txt
 !*.sql
 !nb_template.ipynb
+!tasks.json
 
 # ...even if they are in subdirectories
 !*/

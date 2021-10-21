@@ -1,0 +1,26 @@
+{
+  // See https://go.microsoft.com/fwlink/?LinkId=733558
+  // for the documentation about the tasks.json format
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Update Notebook",
+      "type": "shell",
+      "command": "sed -i 's/Notebooktitle/${input:param1}/' Python_Analysis/Notebooks/${input:param1}.ipynb",
+      "dependsOn": ["Create Notebook"]
+    },
+    {
+      "label": "Create Notebook",
+      "type": "shell",
+      "command": "cp Python_Analysis/Templates/nb_template.ipynb Python_Analysis/Notebooks/${input:param1}.ipynb"
+    }
+  ],
+  "inputs": [
+    {
+      "id": "param1",
+      "description": "author's initials_progressive number_title.ipynb",
+      "default": "ag_0_title",
+      "type": "promptString"
+    }
+  ]
+}
