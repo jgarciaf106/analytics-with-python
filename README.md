@@ -1,11 +1,11 @@
-HR Analytics Python - Jupiter - SQL Version Control
-==============================
+# Analytics with Python - Jupiter - SQL Version Control
 
-Folder Structure
-------------
-- Python_Analysis    
-    - Credentials
-    - Library
-    - Notebooks
-    - Queries
---------
+## Folder Structure
+
+- Python_Analysis
+  - Credentials
+  - Library
+  - Notebooks
+  - Queries
+
+---
