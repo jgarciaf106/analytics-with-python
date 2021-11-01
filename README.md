@@ -7,5 +7,6 @@
   - Library
   - Notebooks
   - Queries
+  - Templates
 
 ---
