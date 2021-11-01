@@ -4,7 +4,6 @@
 !.gitignore
 !*.py
 !*.txt
-!*.sql
 !nb_template.ipynb
 !tasks.json
 

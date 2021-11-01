@@ -39,7 +39,7 @@ class Get_Data:
         self.__db_type = db_type
         self.__db_name = db_name
         self.__request_from = request_from
-        self.__credentials = db_type 
+        self.__credentials = db_type
         self.__output_path = None
         self.__query_path = None
         self.__input_path = None
@@ -50,6 +50,8 @@ class Get_Data:
         self.__fiscal_year = None
         self.__current_quarter = None
         self.__fiscal_quarter = None
+        self.__engine = self.__set_engine()
+        self.__set_fiscal_year()
 
     # setter functions
     """
@@ -65,7 +67,14 @@ class Get_Data:
     def set_input_path(self, path):
         self.__input_path = path
 
-    def set_fiscal_year(self, s_month, s_day, f_year, s_year="previous"):
+    def __set_fiscal_year(self, f_year="", s_month = 11, s_day = 1, s_year="previous"):
+
+        if f_year == "":
+            if dt.datetime.today().month < 11:
+                f_year = dt.datetime.today().year - 1
+            else:
+                f_year = dt.datetime.today().year
+
         self.__fiscal_year = fy.FiscalYear(f_year)
         fy.setup_fiscal_calendar(
             start_year=s_year, start_month=s_month, start_day=s_day
@@ -83,7 +92,7 @@ class Get_Data:
         Enable to work with Postgres, MSSQL, MySQL and Oracle
     """
 
-    def set_engine(self):
+    def __set_engine(self):
         credentials = "C:/Users/garciand/OneDrive - HP Inc/Desktop/Python_Analytics/Python_Analysis/Credentials/{0}.json".format(
             self.__credentials
         )
@@ -123,11 +132,11 @@ class Get_Data:
         returns a dataframe with the query result
     """
 
-    def external_query(self, query_name, engine):
+    def external_query(self, query_name):
         query_path = self.__query_path + "{0}.sql".format(query_name)
         with open(query_path) as get:
             query = get.read()
-        return pd.read_sql_query(query, engine)
+        return pd.read_sql_query(query, self.__engine)
 
     # query inline queries
     """
@@ -136,8 +145,8 @@ class Get_Data:
         returns a dataframe with the query result
     """
 
-    def internal_query(self, query, engine):
-        return pd.read_sql_query(query, engine)
+    def internal_query(self, query):
+        return pd.read_sql_query(query, self.__engine)
 
     # read  files
     """
@@ -157,7 +166,7 @@ class Get_Data:
         saves a password for the file request processed.
     """
 
-    def password_tracker(self, request_date, file_name, password):
+    def __password_tracker(self, request_date, file_name, password):
         app = xw.App(visible=False)
         wb = xw.Book(
             r"C:/Users/garciand/OneDrive - HP Inc/Desktop/Deliverables/Password Tracker/Password_Tracker.xlsx"
@@ -182,7 +191,7 @@ class Get_Data:
         file name required parameter.
     """
 
-    def file_cleaner(self, file):
+    def __file_cleaner(self, file):
         if os.path.exists(file):
             os.remove(file)
 
@@ -193,7 +202,7 @@ class Get_Data:
         File name and password required parameters
     """
 
-    def draft_email(self, file_name, password):
+    def __draft_email(self, file_name, password):
         const = win32com.client.constants
         olMailItem = 0x0
         obj = win32com.client.Dispatch("Outlook.Application")
@@ -239,12 +248,12 @@ class Get_Data:
         dataframe, file name and protect file parameters required.
     """
 
-    def file_saver(self, data, file_name, protect_file):
+    def __file_saver(self, data, file_name, protect_file):
         # default password
         file_password = ""
 
         # remove existing files before save
-        self.file_cleaner("{0}{1}.xlsx".format(self.__output_path, file_name))
+        self.__file_cleaner("{0}{1}.xlsx".format(self.__output_path, file_name))
 
         # workbook / sheet variables
         app = xw.App(visible=False)
@@ -276,14 +285,14 @@ class Get_Data:
         app.quit()
 
         # update password tracker
-        self.password_tracker(
+        self.__password_tracker(
             self.__today,
             file_name,
             file_password,
         )
 
         # promtp email
-        self.draft_email(file_name, file_password)
+        self.__draft_email(file_name, file_password)
 
     # export file to folder
     """
@@ -299,21 +308,20 @@ class Get_Data:
             file_name = custom_filename
 
         # save file
-        self.file_saver(
+        self.__file_saver(
             odf,
             file_name,
             protect_file,
         )
 
-    def ppt_analyzer(input, output):
+    def ppt_analyzer(self, input, output):
 
         """Take the input file and analyze the structure.
         The output file contains marked up information to make it easier
         for generating future powerpoint templates.
         """
         prs = Presentation(input)
-        # Each powerpoint file has multiple layouts
-        # Loop through them all and  see where the various elements are
+        
         for index, _ in enumerate(prs.slide_layouts):
             slide = prs.slides.add_slide(prs.slide_layouts[index])
             # Not every slide has to have a title
@@ -322,6 +330,7 @@ class Get_Data:
                 title.text = "Title for Layout {}".format(index)
             except AttributeError:
                 print("No Title for Layout {}".format(index))
+
             # Go through all the placeholders and identify them by index and type
             for shape in slide.placeholders:
                 if shape.is_placeholder:
@@ -335,9 +344,15 @@ class Get_Data:
                     except AttributeError:
                         print("{} has no text attribute".format(phf.type))
                     print("{} {}".format(phf.idx, shape.name))
-        prs.save("./Templates/" + output)
-            
-    def ppt_export(self, file_type, org=None):
+        prs.save("../Templates/" + output)
+
+    def ppt_identifier(self, input, slide_number):
+        prs = Presentation(input)
+        slide = prs.slides[slide_number]
+        for shape in slide.shapes:
+            print("id: %s, name: %s, , type: %s" % (shape.shape_id, shape.name, shape.shape_type))
+
+    def ppt_export(self, file_type, template_type, org=None):
 
         # determine output file HPI Total or L1 Org Dashboard
         if file_type == "HPI":
@@ -348,13 +363,19 @@ class Get_Data:
             output_file = "DEI {0} Dashboard {1}".format(org, self.__monthyear)
 
         # set slides to be updated
-        prs = Presentation("./Templates/HP_Presentation_Template.pptx")
+        prs = Presentation("../Templates/HP_Presentation_Template_" + template_type + ".pptx")
         slide_1 = prs.slides[0]
         slide_4 = prs.slides[3]
+        slide_5 = prs.slides[4]
         slide_6 = prs.slides[5]
         slide_7 = prs.slides[6]
         slide_8 = prs.slides[7]
         slide_9 = prs.slides[8]
+        slide_11 = prs.slides[10]
+        slide_12 = prs.slides[11]
+        slide_13 = prs.slides[12]
+        slide_15 = prs.slides[14]
+        
 
         # set placeholders to be updated
         prs_sub_1 = slide_1.placeholders[1]
@@ -364,6 +385,7 @@ class Get_Data:
         prs_sub_8 = slide_8.placeholders[0]
         prs_sub_9 = slide_9.placeholders[0]
 
+        
         # update placeholders
         if file_type == "HPI":
             prs_sub_1.text = "As of {0} month, end/{1}".format(
@@ -374,9 +396,9 @@ class Get_Data:
                 org, self.__monthname_long, self.__current_quarter
             )
 
-        prs_sub_4.text = (
-            self.__fiscal_quarter + " " + self.__current_quarter + " Headcount"
-        )
+        prs_sub_4.text = self.__fiscal_quarter + " " + self.__current_quarter + " Headcount"
+        
+
         prs_sub_6.text = "{0}/{1} Status to Diversity Targets (Company Level)".format(
             self.__monthname_short, self.__current_quarter
         )
@@ -393,4 +415,11 @@ class Get_Data:
         )
 
         # save updated template
-        prs.save(self.__output_path + file_type + "\\" + output_file + ".pptx")
+        prs.save(
+            self.__output_path
+            + "Quarterly Dashboards\\"
+            + file_type
+            + "\\"
+            + output_file
+            + ".pptx"
+        )

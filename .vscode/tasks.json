@@ -4,22 +4,22 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "Update Notebook",
+      "label": "Create Python Notebook",
       "type": "shell",
-      "command": "sed -i 's/Notebooktitle/${input:param1}/' Python_Analysis/Notebooks/${input:param1}.ipynb",
-      "dependsOn": ["Create Notebook"]
-    },
-    {
-      "label": "Create Notebook",
-      "type": "shell",
-      "command": "cp Python_Analysis/Templates/nb_template.ipynb Python_Analysis/Notebooks/${input:param1}.ipynb"
+      "command": "cp Python_Analysis/Templates/nb_template.ipynb Python_Analysis/Notebooks/${input:param1}.ipynb && sed -i 's/Notebooktitle/${input:param2}/' Python_Analysis/Notebooks/${input:param1}.ipynb && code Python_Analysis/Notebooks/${input:param1}.ipynb"
     }
   ],
   "inputs": [
     {
       "id": "param1",
-      "description": "author's initials_progressive number_title.ipynb",
+      "description": "Author's initials, month number, title ",
       "default": "ag_0_title",
+      "type": "promptString"
+    },
+    {
+      "id": "param2",
+      "description": "Notebook Title",
+      "default": "Sample Notebook Title",
       "type": "promptString"
     }
   ]

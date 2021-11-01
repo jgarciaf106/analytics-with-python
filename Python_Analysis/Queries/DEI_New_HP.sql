@@ -23,7 +23,10 @@ FROM (
 	-- HC SELECT
 	SELECT 
 		WD."Report Date",
-		COALESCE(F1."Business Lvl 1 (Group) Code",WD."Business Lvl 1 (Group) Code") AS "Hybrid L1",
+		CASE
+			WHEN COALESCE(F2."Business Lvl 2 (Unit) Code",WD."Business Lvl 2 (Unit) Code") = 'PIN' THEN 'HPIB'
+			ELSE COALESCE(F1."Business Lvl 1 (Group) Code",WD."Business Lvl 1 (Group) Code")
+		END AS "Hybrid L1",
 		COALESCE(F2."Business Lvl 2 (Unit) Code",WD."Business Lvl 2 (Unit) Code") AS "Hybrid L2",
 
 		CASE
@@ -125,7 +128,7 @@ FROM (
 	LEFT JOIN "HPW_W_DISABILITIES" AS PWD ON PWD."Employee ID" = WD."Worker ID" AND PWD."Report Date" = (Select Max("Report Date") From "HPW_W_DISABILITIES")
 
 	WHERE 
-		WD."Report Date" > (Select Max("Report Date") - interval '1 year' From "HPW_DATA")
+		WD."Report Date" > (Select date_trunc('month', Max("Report Date") - interval '1 year') + interval '1 month' - interval '1 day' From "HPW_DATA")
 		AND WD."Worker Reg / Temp Code" = 'R'
 		AND WD."Worker Status Category Code" = 'A'
 		AND WD."Business Lvl 4 (MRU) Code" <> 'G034'
@@ -135,8 +138,11 @@ FROM (
 	
 	-- Attrition Select
 	SELECT 
-		date_trunc('month', WD."Termination Date") + interval '1 month' - interval '1 day' AS "Report Date",
-		COALESCE(F1."Business Lvl 1 (Group) Code",WD."Business Lvl 1 (Group) Code") AS "Hybrid L1",
+		date(date_trunc('month', WD."Termination Date" + INTERVAL '1 day') + interval '1 month' - interval '1 day') AS "Report Date",
+		CASE
+			WHEN COALESCE(F2."Business Lvl 2 (Unit) Code",WD."Business Lvl 2 (Unit) Code") = 'PIN' THEN 'HPIB'
+			ELSE COALESCE(F1."Business Lvl 1 (Group) Code",WD."Business Lvl 1 (Group) Code")
+		END AS "Hybrid L1",
 		COALESCE(F2."Business Lvl 2 (Unit) Code",WD."Business Lvl 2 (Unit) Code") AS "Hybrid L2",
 	
 		CASE
@@ -238,7 +244,7 @@ FROM (
 		LEFT JOIN "HPW_VETERANS" AS VET ON VET."Report Date" = WD."Report Date"	AND VET."Employee ID" = WD."Worker ID"	AND VET."Veteran Status" = 'Y'
 		LEFT JOIN "HPW_W_DISABILITIES" AS PWD ON PWD."Employee ID" = WD."Worker ID" AND PWD."Report Date" = (Select Max("Report Date") From "HPW_W_DISABILITIES")
 	WHERE 
-		date_trunc('month', WD."Termination Date") + interval '1 month' - interval '1 day' > (Select Max("Report Date") - interval '1 year' From "HPW_DATA")
+		date(date_trunc('month', WD."Termination Date" + INTERVAL '1 day') + interval '1 month' - interval '1 day') > (Select date_trunc('month', Max("Report Date") - interval '1 year') + interval '1 month' - interval '1 day' From "HPW_DATA")
 		AND WD."Business Lvl 4 (MRU) Code" <> 'G034'
 		AND NOT (WD."Business Lvl 1 (Group) Code" = 'OPER'AND WD."Work Address - City" = 'Pantnagar')
 ) AS S
