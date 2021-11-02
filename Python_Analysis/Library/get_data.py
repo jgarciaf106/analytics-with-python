@@ -58,14 +58,13 @@ class Get_Data:
         Function to set input, output, queries paths if needed.
     """
 
-    def set_output_path(self, path):
-        self.__output_path = path
-
-    def set_queries_path(self, path):
-        self.__query_path = path
-
-    def set_input_path(self, path):
-        self.__input_path = path
+    def set_path(self, path_type, path):
+        if path_type == "output":
+            self.__output_path = path
+        elif path_type == "queries": 
+            self.__query_path = path
+        elif path_type == "input":
+            self.__input_path = path
 
     def __set_fiscal_year(self, f_year="", s_month = 11, s_day = 1, s_year="previous"):
 
@@ -155,9 +154,12 @@ class Get_Data:
         returns a dataframe with the data read from the external file
     """
 
-    def file_query(self, file_name, folder):
-        file = self.__input_path + folder + "/" + file_name
-        return pd.read_excel(file, index_col=0)
+    def file_query(self, file_name, engine_reader="",read_sheet=0):
+        file = self.__input_path + file_name
+        if engine_reader == "":
+            return pd.read_excel(file, sheet_name=read_sheet, index_col=0)
+        else:
+            return pd.read_excel(file, sheet_name=read_sheet, index_col=0, engine=engine_reader)
 
     # stores request passwords
     """
@@ -248,7 +250,7 @@ class Get_Data:
         dataframe, file name and protect file parameters required.
     """
 
-    def __file_saver(self, data, file_name, protect_file):
+    def __file_saver(self, data, file_name, protect_file, draft_email):
         # default password
         file_password = ""
 
@@ -291,15 +293,16 @@ class Get_Data:
             file_password,
         )
 
-        # promtp email
-        self.__draft_email(file_name, file_password)
+        # prompt
+        if draft_email != "No":
+            self.__draft_email(file_name, file_password)
 
     # export file to folder
     """
         Function to call functions that finish the process of manage each request.
     """
 
-    def export_data(self, odf, custom_filename="", protect_file="No"):
+    def export_data(self, odf, custom_filename="", protect_file="No", draft_email="No"):
         # assign file name
         if custom_filename == "":
             file_date = self.__today.strftime("%Y-%m-%d")
@@ -312,6 +315,7 @@ class Get_Data:
             odf,
             file_name,
             protect_file,
+            draft_email
         )
 
     def ppt_analyzer(self, input, output):
