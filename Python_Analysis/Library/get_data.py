@@ -15,19 +15,30 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import datetime as dt
 import fiscalyear as fy
+from sys import exit
 from tkinter import messagebox
 from sqlalchemy import create_engine
 from openpyxl import Workbook
 from openpyxl.utils.dataframe import dataframe_to_rows
 from openpyxl.styles import PatternFill, Border, Side, Alignment, Protection, Font
 from win32com.client import Dispatch, constants
-
-# from __future__ import print_function
 from pptx import Presentation
 from pptx.util import Inches
 
 
-class Get_Data:
+class B_Colors:
+    HEADER = "\033[95m"
+    OKBLUE = "\033[94m"
+    OKCYAN = "\033[96m"
+    OKGREEN = "\033[92m"
+    WARNING = "\033[93m"
+    FAIL = "\033[91m"
+    ENDC = "\033[0m"
+    BOLD = "\033[1m"
+    UNDERLINE = "\033[4m"
+
+
+class Get_Data(B_Colors):
 
     # init method or constructor
     def __init__(
@@ -60,13 +71,13 @@ class Get_Data:
 
     def set_path(self, path_type, path):
         if path_type == "output":
-            self.__output_path = path
-        elif path_type == "queries": 
+            self.__output_path = path + self.__request_from +"\\"
+        elif path_type == "query":
             self.__query_path = path
         elif path_type == "input":
             self.__input_path = path
 
-    def __set_fiscal_year(self, f_year="", s_month = 11, s_day = 1, s_year="previous"):
+    def __set_fiscal_year(self, f_year="", s_month=11, s_day=1, s_year="previous"):
 
         if f_year == "":
             if dt.datetime.today().month < 11:
@@ -154,12 +165,14 @@ class Get_Data:
         returns a dataframe with the data read from the external file
     """
 
-    def file_query(self, file_name, engine_reader="",read_sheet=0):
+    def file_query(self, file_name, engine_reader="", read_sheet=0):
         file = self.__input_path + file_name
         if engine_reader == "":
             return pd.read_excel(file, sheet_name=read_sheet, index_col=0)
         else:
-            return pd.read_excel(file, sheet_name=read_sheet, index_col=0, engine=engine_reader)
+            return pd.read_excel(
+                file, sheet_name=read_sheet, index_col=0, engine=engine_reader
+            )
 
     # stores request passwords
     """
@@ -168,10 +181,18 @@ class Get_Data:
         saves a password for the file request processed.
     """
 
+    # trims whitespaces
+    def column_trim(self, df):
+        """
+        Trim whitespace from ends of each value across all series in dataframe
+        """
+        trim_strings = lambda x: x.strip() if isinstance(x, str) else x
+        return df.applymap(trim_strings)
+
     def __password_tracker(self, request_date, file_name, password):
         app = xw.App(visible=False)
         wb = xw.Book(
-            r"C:/Users/garciand/OneDrive - HP Inc/Desktop/Deliverables/Password Tracker/Password_Tracker.xlsx"
+            r"C:/Users/garciand/OneDrive - HP Inc/Desktop/Deliverables/Output/Password Tracker/Password_Tracker.xlsx"
         )
         ws = wb.sheets[0]
 
@@ -204,15 +225,37 @@ class Get_Data:
         File name and password required parameters
     """
 
-    def __draft_email(self, file_name, password):
+    def __draft_email(self, recipient, file_name, password, folder_search=""):
+
+        # instantiate outlook to get received Items
+        outlook = win32com.client.Dispatch("Outlook.Application").GetNamespace("MAPI")
+        if folder_search != "":
+            inbox = outlook.GetDefaultFolder(6).Folders.Item(
+                folder_search
+            )  # inbox in subfolders
+        elif folder_search == "":
+            inbox = outlook.GetDefaultFolder(6)  # inbox emails
+
+        # instantiate outlook to send email
         const = win32com.client.constants
         olMailItem = 0x0
         obj = win32com.client.Dispatch("Outlook.Application")
 
-        new_mail = obj.CreateItem(olMailItem)
-        new_mail.Subject = "Insert Email Subject Here"
-        new_mail.BodyFormat = 2
+        # get recived emails
+        messages = inbox.Items
+        message = messages.GetLast()
+        sender_name = message.Sender.GetExchangeUser().name.split(",")[-1].strip()
+        sender_address = message.Sender.GetExchangeUser().PrimarySmtpAddress
+        sender_cc_address = ";".join(
+            [
+                item.AddressEntry.GetExchangeUser().PrimarySmtpAddress
+                for item in message.Recipients
+                if item.AddressEntry.GetExchangeUser().PrimarySmtpAddress
+                != "andres.garcia.fernandez@hp.com"
+            ]
+        )
 
+        # set email signature
         signature_htm = os.path.join(
             os.environ["USERPROFILE"], "AppData\\Roaming\\Microsoft\\Signatures\\HP.htm"
         )
@@ -220,28 +263,53 @@ class Get_Data:
         email_signature = html_file.read()
         html_file.close()
 
-        email_body = """
-        <HTML>
-            <BODY style="font-family:HP Simplified Light;font-size:14.5px;">
-                <p>Hi XXXX,</p>
-                <p>Please find attached the report requested.</p>
-                <p>[ Start - Delete these lines if file is not password protected ***</p>
-                <p>Copy Password Then review file, delete password from this email, send email and share password on a separate email.</p>
-                <p>The attached file is password protected, the password will be shared on the following email.</p>
-                <p>Password: {0}</p>
-                <p>End - Delete these lines if file is not password protected]</p>
-                <p>Kind Regards,</p> 
-            </BODY>
-        </HTML>""".format(
-            password
-        )
-        new_mail.HTMLBody = email_body + email_signature
-        new_mail.To = "insert.requester.email@here.com"
-        attachment = self.__output_path + file_name + ".xlsx"
-        new_mail.Attachments.Add(Source=attachment)
-        new_mail.save()
-        # new_mail.display(True)
-        # new_mail.Send()
+        # html email body and subject
+
+        # get original email subject
+        email_subject = message.Subject
+
+        # create new email items
+        new_mail = obj.CreateItem(olMailItem)
+        new_mail.Subject = email_subject
+        new_mail.BodyFormat = 2
+
+        if password != "":
+            email_body = """
+                    <HTML>
+                        <BODY style="font-family:HP Simplified Light;font-size:14.5px;">
+                            <p>Hi {0},</p>
+                            <p>Please find attached the report requested.</p>
+                            <p>The attached file is password protected, password will be shared on the following email.</p>
+                            <p><em style="color:red">*** Delete Before Sending Email ***</em>
+                            <strong>Password:</strong> {1} Copy password to send it on a separate email.
+                            <em style="color:red">*** Delete Before Sending Email ***</em></p>
+                            <p>Kind Regards,</p> 
+                        </BODY>
+                    </HTML>""".format(
+                sender_name, password
+            )
+        else:
+            email_body = """
+                <HTML>
+                    <BODY style="font-family:HP Simplified Light;font-size:14.5px;">
+                        <p>Hi {0},</p>
+                        <p>Please find attached the report requested.</p>
+                        <p>Kind Regards,</p> 
+                    </BODY>
+                </HTML>""".format(
+                sender_name
+            )
+
+        # validate that email will be sent to correct recepient
+        if sender_address == recipient:  # based on the subject replying to email
+            reply_all = message.ReplyAll()
+            new_mail.HTMLBody = email_body + email_signature + reply_all.HTMLBody
+            new_mail.To = sender_address
+            new_mail.CC = sender_cc_address
+            attachment = self.__output_path + file_name + ".xlsx"
+            new_mail.Attachments.Add(Source=attachment)
+            new_mail.save()
+
         return None
 
     # save formatted file
@@ -250,7 +318,7 @@ class Get_Data:
         dataframe, file name and protect file parameters required.
     """
 
-    def __file_saver(self, data, file_name, protect_file, draft_email):
+    def __file_saver(self, data, file_name, protect_file, draft_email, requester, email_folder):
         # default password
         file_password = ""
 
@@ -295,14 +363,14 @@ class Get_Data:
 
         # prompt
         if draft_email != "No":
-            self.__draft_email(file_name, file_password)
+            self.__draft_email(requester, file_name, file_password, email_folder)
 
     # export file to folder
     """
         Function to call functions that finish the process of manage each request.
     """
 
-    def export_data(self, odf, custom_filename="", protect_file="No", draft_email="No"):
+    def export_data(self, odf, custom_filename="", protect_file="No", draft_email="No", requester="", email_folder=""):
         # assign file name
         if custom_filename == "":
             file_date = self.__today.strftime("%Y-%m-%d")
@@ -311,12 +379,7 @@ class Get_Data:
             file_name = custom_filename
 
         # save file
-        self.__file_saver(
-            odf,
-            file_name,
-            protect_file,
-            draft_email
-        )
+        self.__file_saver(odf, file_name, protect_file, draft_email, requester, email_folder)
 
     def ppt_analyzer(self, input, output):
 
@@ -325,7 +388,7 @@ class Get_Data:
         for generating future powerpoint templates.
         """
         prs = Presentation(input)
-        
+
         for index, _ in enumerate(prs.slide_layouts):
             slide = prs.slides.add_slide(prs.slide_layouts[index])
             # Not every slide has to have a title
@@ -354,7 +417,10 @@ class Get_Data:
         prs = Presentation(input)
         slide = prs.slides[slide_number]
         for shape in slide.shapes:
-            print("id: %s, name: %s, , type: %s" % (shape.shape_id, shape.name, shape.shape_type))
+            print(
+                "id: %s, name: %s, , type: %s"
+                % (shape.shape_id, shape.name, shape.shape_type)
+            )
 
     def ppt_export(self, file_type, template_type, org=None):
 
@@ -367,7 +433,9 @@ class Get_Data:
             output_file = "DEI {0} Dashboard {1}".format(org, self.__monthyear)
 
         # set slides to be updated
-        prs = Presentation("../Templates/HP_Presentation_Template_" + template_type + ".pptx")
+        prs = Presentation(
+            "../Templates/HP_Presentation_Template_" + template_type + ".pptx"
+        )
         slide_1 = prs.slides[0]
         slide_4 = prs.slides[3]
         slide_5 = prs.slides[4]
@@ -379,7 +447,6 @@ class Get_Data:
         slide_12 = prs.slides[11]
         slide_13 = prs.slides[12]
         slide_15 = prs.slides[14]
-        
 
         # set placeholders to be updated
         prs_sub_1 = slide_1.placeholders[1]
@@ -389,7 +456,6 @@ class Get_Data:
         prs_sub_8 = slide_8.placeholders[0]
         prs_sub_9 = slide_9.placeholders[0]
 
-        
         # update placeholders
         if file_type == "HPI":
             prs_sub_1.text = "As of {0} month, end/{1}".format(
@@ -400,8 +466,9 @@ class Get_Data:
                 org, self.__monthname_long, self.__current_quarter
             )
 
-        prs_sub_4.text = self.__fiscal_quarter + " " + self.__current_quarter + " Headcount"
-        
+        prs_sub_4.text = (
+            self.__fiscal_quarter + " " + self.__current_quarter + " Headcount"
+        )
 
         prs_sub_6.text = "{0}/{1} Status to Diversity Targets (Company Level)".format(
             self.__monthname_short, self.__current_quarter
