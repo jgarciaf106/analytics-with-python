@@ -68,44 +68,44 @@ class Get_Data(B_Colors):
 
     def set_path(self, path_type, path):
         """
-            Sets paths to specific locations, input, output, queries
+        Sets paths to specific locations, input, output, queries
 
-            Parameters
-            ----------
-            path_type : str
-                Whether the path is for an input, output or query location
-            path : str
-                Path to the specific directory location
+        Parameters
+        ----------
+        path_type : str
+            Whether the path is for an input, output or query location
+        path : str
+            Path to the specific directory location
         """
 
         if path_type == "output":
-            self.__output_path = path + self.__request_from +"\\"
+            self.__output_path = path + self.__request_from + "\\"
         elif path_type == "query":
             self.__query_path = path
         elif path_type == "input":
             self.__input_path = path
 
-    def __set_fiscal_year(self, f_year="", s_month=11, s_day=1, s_year="previous"):
+    def __set_fiscal_year(self, f_year=None, s_month=11, s_day=1, s_year="previous"):
         """
-            Sets the fiscal year to an company's Fiscal start date.
+        Sets the fiscal year to an company's Fiscal start date.
 
-            Parameters
-            ----------
-            f_year : int, optional
-                Year when fiscal year starts (default is
-                blank)
-            s_month : int, optional
-                Month when fiscal year starts (default is
-                11)
-            s_day : int, optional
-                Day when fiscal year starts (default is
-                01)
-            s_year : str, optional
-                Point in time when fiscal year starts, same year of previous year (default is
-                previous)
+        Parameters
+        ----------
+        f_year : int, optional
+            Year when fiscal year starts (default is
+            blank)
+        s_month : int, optional
+            Month when fiscal year starts (default is
+            11)
+        s_day : int, optional
+            Day when fiscal year starts (default is
+            01)
+        s_year : str, optional
+            Point in time when fiscal year starts, same year of previous year (default is
+            previous)
         """
 
-        if f_year == "":
+        if f_year is None:
             if dt.datetime.today().month < 11:
                 f_year = dt.datetime.today().year - 1
             else:
@@ -125,18 +125,18 @@ class Get_Data(B_Colors):
     # set engine db
     def __set_engine(self):
         """
-            Sets the engine to start querying the specific data base
+        Sets the engine to start querying the specific data base
 
-            Parameters
-            ----------
-            None
+        Parameters
+        ----------
+        None
 
-            Returns
-            -------
-            object
-                details of the database that needs to be query.
+        Returns
+        -------
+        object
+            details of the database that needs to be query.
         """
-        
+
         credentials = "C:/Users/garciand/OneDrive - HP Inc/Desktop/Python_Analytics/Python_Analysis/Credentials/{0}.json".format(
             self.__credentials
         )
@@ -172,19 +172,19 @@ class Get_Data(B_Colors):
     # query external file queries
     def external_query(self, query_name):
         """
-            Query the database using a external query file.
+        Query the database using a external query file.
 
-            Parameters
-            ----------
-            query_name : str
-                The file with the predefined query.
+        Parameters
+        ----------
+        query_name : str
+            The file with the predefined query.
 
-            Returns
-            -------
-            dataframe
-                a dataframe with the queried data.
+        Returns
+        -------
+        dataframe
+            a dataframe with the queried data.
         """
-        
+
         query_path = self.__query_path + "{0}.sql".format(query_name)
         with open(query_path) as get:
             query = get.read()
@@ -193,45 +193,45 @@ class Get_Data(B_Colors):
     # query inline queries
     def internal_query(self, query_name):
         """
-            Query the database using an inline query or query variable.
+        Query the database using an inline query or query variable.
 
-            Parameters
-            ----------
-            query_name : str
-                The file with the predefined query.
+        Parameters
+        ----------
+        query_name : str
+            The file with the predefined query.
 
-            Returns
-            -------
-            dataframe
-                a dataframe with the queried data.
+        Returns
+        -------
+        dataframe
+            a dataframe with the queried data.
         """
-        
+
         return pd.read_sql_query(query_name, self.__engine)
 
     # read  files
-    def file_query(self, file_name, engine_reader="", read_sheet=0):
+    def file_query(self, file_name, engine_reader=None, read_sheet=0):
         """
-            Reads an external excel file to get the data
+        Reads an external excel file to get the data
 
-            Parameters
-            ----------
-            file_name : str
-                The file name that needs to be read.
-            engine_reader : str, optional
-                If a a different engine reader is neeed to open the file (default is
-                Blank)
-            read_sheet : [str, int], optional
-                Indicates which sheet to read by Sheet name or Index position (default is
-                index 0)
+        Parameters
+        ----------
+        file_name : str
+            The file name that needs to be read.
+        engine_reader : str, optional
+            If a a different engine reader is neeed to open the file (default is
+            Blank)
+        read_sheet : [str, int], optional
+            Indicates which sheet to read by Sheet name or Index position (default is
+            index 0)
 
-            Returns
-            -------
-            dataframe
-                a dataframe with the queried data.
+        Returns
+        -------
+        dataframe
+            a dataframe with the queried data.
         """
-        
+
         file = self.__input_path + file_name
-        if engine_reader == "":
+        if engine_reader is None:
             return pd.read_excel(file, sheet_name=read_sheet, index_col=0)
         else:
             return pd.read_excel(
@@ -241,36 +241,36 @@ class Get_Data(B_Colors):
     # trims whitespaces
     def column_trim(self, df):
         """
-            Trims any trailing spaces on string dataframe colums
+        Trims any trailing spaces on string dataframe colums
 
-            Parameters
-            ----------
-            df : dataframe
-                The dataframe that needs column tims
+        Parameters
+        ----------
+        df : dataframe
+            The dataframe that needs column tims
 
-            Returns
-            -------
-            datafram
-                a dataframe with all column strings trimmed
+        Returns
+        -------
+        datafram
+            a dataframe with all column strings trimmed
         """
-        
+
         trim_strings = lambda x: x.strip() if isinstance(x, str) else x
         return df.applymap(trim_strings)
 
     def __password_tracker(self, request_date, file_name, password):
         """
-            Stores a password for all password protected files in a tracker
+        Stores a password for all password protected files in a tracker
 
-            Parameters
-            ----------
-            request_date : date
-                The date when the request was process
-            file_name : string
-                The request file's name
-            password : string
-                The password to open the file
+        Parameters
+        ----------
+        request_date : date
+            The date when the request was process
+        file_name : string
+            The request file's name
+        password : string
+            The password to open the file
         """
-        
+
         app = xw.App(visible=False)
         wb = xw.Book(
             r"C:/Users/garciand/OneDrive - HP Inc/Desktop/Deliverables/Output/Password Tracker/Password_Tracker.xlsx"
@@ -292,35 +292,35 @@ class Get_Data(B_Colors):
     # delete existing file
     def __file_cleaner(self, file_name):
         """
-            Deletes any old file before storing an updated file
+        Deletes any old file before storing an updated file
 
-            Parameters
-            ----------
-            file_name : str
-                The file location and name to be deleted
+        Parameters
+        ----------
+        file_name : str
+            The file location and name to be deleted
         """
-        
+
         if os.path.exists(file_name):
             os.remove(file_name)
 
-    # password share after email sent    
+    # password share after email sent
     def __password_share(self, password, email_subject):
         """
-            Replies to a sent email with the file password.
+        Replies to a sent email with the file password.
 
-            Parameters
-            ----------
-            password : str
-                The file's password
-            email_subject : str
-                Subject of the last email to ensure the password is sent only to that email.
+        Parameters
+        ----------
+        password : str
+            The file's password
+        email_subject : str
+            Subject of the last email to ensure the password is sent only to that email.
 
-            Returns
-            -------
-            list
-                a list of strings used that are the header columns
+        Returns
+        -------
+        list
+            a list of strings used that are the header columns
         """
-        
+
         outlook = win32com.client.Dispatch("Outlook.Application").GetNamespace("MAPI")
         sent_items = outlook.GetDefaultFolder(5)
         messages = sent_items.Items
@@ -328,35 +328,35 @@ class Get_Data(B_Colors):
         pass
 
     # save email to outlook drafts
-    def __draft_email(self, recipient, file_name, password, folder_search=""):        
+    def __draft_email(self, recipient, file_name, password, folder_search):
         """
-            Creates a draft email to be sent with the report atteched.
+        Creates a draft email to be sent with the report atteched.
 
-            Parameters
-            ----------
-            recipient : str
-                Email address of the person that should get the email
-            file_name : str
-                The file location and name to be attached
-            password : str
-                The password to open the file
-            folder_search : str, optional
-                Determines in which email folder the last email is stores (default is
-                Blank)
+        Parameters
+        ----------
+        recipient : str
+            Email address of the person that should get the email
+        file_name : str
+            The file location and name to be attached
+        password : str
+            The password to open the file
+        folder_search : str, optional
+            Determines in which email folder the last email is stores (default is
+            Blank)
 
-            Returns
-            -------
-            None
-                define a null variable or an object
+        Returns
+        -------
+        None
+            define a null variable or an object
         """
-        
+
         # instantiate outlook to get received Items
         outlook = win32com.client.Dispatch("Outlook.Application").GetNamespace("MAPI")
-        if folder_search != "":
+        if folder_search is not None:
             inbox = outlook.GetDefaultFolder(6).Folders.Item(
                 folder_search
             )  # inbox in subfolders
-        elif folder_search == "":
+        else:
             inbox = outlook.GetDefaultFolder(6)  # inbox emails
 
         # instantiate outlook to send email
@@ -396,7 +396,7 @@ class Get_Data(B_Colors):
         new_mail.Subject = email_subject
         new_mail.BodyFormat = 2
 
-        if password != "":
+        if password is not None:
             email_body = """
                     <HTML>
                         <BODY style="font-family:HP Simplified Light;font-size:14.5px;">
@@ -436,28 +436,30 @@ class Get_Data(B_Colors):
         return None
 
     # save formatted file
-    def __file_saver(self, data, file_name, protect_file, draft_email, requester, email_folder):
+    def __file_saver(
+        self, data, file_name, protect_file, draft_email, requester, email_folder
+    ):
         """
-            Saves a formatted excel file
+        Saves a formatted excel file
 
-            Parameters
-            ----------
-            data : dataframe
-                The datafram that needs to be stored to excel
-            file_name : str
-                The file name for the excel file
-            protect_file : str
-                Flag to determine if the file has to be password protected
-            draft_email : str
-                Flag to determine if an email draft is needed
-            requester : str
-                email address if an email draft has to sent
-            email_folder : str
-                Email folder where the last email is stored
+        Parameters
+        ----------
+        data : dataframe
+            The datafram that needs to be stored to excel
+        file_name : str
+            The file name for the excel file
+        protect_file : bool
+            Flag to determine if the file has to be password protected
+        draft_email : bool
+            Flag to determine if an email draft is needed
+        requester : str
+            email address if an email draft has to sent
+        email_folder : str
+            Email folder where the last email is stored
         """
-        
+
         # default password
-        file_password = ""
+        file_password = None
 
         # remove existing files before save
         self.__file_cleaner("{0}{1}.xlsx".format(self.__output_path, file_name))
@@ -482,11 +484,11 @@ class Get_Data(B_Colors):
         data_format.api.Font.Size = 12
 
         # save password protect file if needed
-        if protect_file == "Yes":
+        if protect_file:
             file_password = "HPI" + str(self.__today.strftime("%I%M%S"))
             wb.api.SaveAs(self.__output_path + file_name, Password=file_password)
 
-        elif protect_file == "No":
+        else:
             wb.api.SaveAs(self.__output_path + file_name)
 
         app.quit()
@@ -499,62 +501,72 @@ class Get_Data(B_Colors):
         )
 
         # prompt
-        if draft_email != "No":
+        if draft_email:
             self.__draft_email(requester, file_name, file_password, email_folder)
 
     # export file to folder
-    def export_data(self, odf, custom_filename="", protect_file="No", draft_email="No", requester="", email_folder=""):
+    def export_data(
+        self,
+        odf,
+        custom_filename=None,
+        protect_file=False,
+        draft_email=False,
+        requester=None,
+        email_folder=None,
+    ):
         """
-            Calls other functions to export the data.
+        Calls other functions to export the data.
 
-            Parameters
-            ----------
-            odf : dataframe
-                The dataframe that needs to be stored.
-            custom_filename : str, optional
-                A custome file name for the file to be stored (default is
-                Blank)
-            protect_file : str, optional
-                A flag used to determine if file has to password protected(default is
-                No)
-            draft_email : str, optional
-                A flag used to determine if a draft email is neeed (default is
-                No)
-            requester : str, optional
-                Email address for the requester (default is
-                Blank)
-            email_folder : str, optional
-                Email folder where the last email is stored (default is
-                Blank)
+        Parameters
+        ----------
+        odf : dataframe
+            The dataframe that needs to be stored.
+        custom_filename : str, optional
+            A custome file name for the file to be stored (default is
+            Blank)
+        protect_file : bool, optional
+            A flag used to determine if file has to password protected(default is
+            False)
+        draft_email : bool, optional
+            A flag used to determine if a draft email is neeed (default is
+            False)
+        requester : str, optional
+            Email address for the requester (default is
+            Blank)
+        email_folder : str, optional
+            Email folder where the last email is stored (default is
+            Blank)
 
-            Returns
-            -------
-            list
-                a list of strings used that are the header columns
+        Returns
+        -------
+        list
+            a list of strings used that are the header columns
         """
-        
+
         # assign file name
-        if custom_filename == "":
+        if custom_filename is None:
             file_date = self.__today.strftime("%Y-%m-%d")
             file_name = self.__request_from + " " + file_date
         else:
             file_name = custom_filename
 
         # save file
-        self.__file_saver(odf, file_name, protect_file, draft_email, requester, email_folder)
+        self.__file_saver(
+            odf, file_name, protect_file, draft_email, requester, email_folder
+        )
 
     def ppt_analyzer(self, input, output):
         """
-            Analize a power point presentation to indicatate each of ppt elements
+        Analize a power point presentation to indicatate each of ppt elements
 
-            Parameters
-            ----------
-            input : str
-                The ppt template directory location and name
-            output : str
-                The file output to avoid overwrite the original template
+        Parameters
+        ----------
+        input : str
+            The ppt template directory location and name
+        output : str
+            The file output to avoid overwrite the original template
         """
-        
+
         prs = Presentation(input)
 
         for index, _ in enumerate(prs.slide_layouts):
@@ -583,16 +595,16 @@ class Get_Data(B_Colors):
 
     def ppt_identifier(self, input, slide_number):
         """
-            Identifies a ppt single slide elements
+        Identifies a ppt single slide elements
 
-            Parameters
-            ----------
-            input : str
-                The ppt template directory location and name
-            slide_number : int
-                The slide number 
+        Parameters
+        ----------
+        input : str
+            The ppt template directory location and name
+        slide_number : int
+            The slide number
         """
-        
+
         prs = Presentation(input)
         slide = prs.slides[slide_number - 1]
         for shape in slide.shapes:
@@ -603,22 +615,22 @@ class Get_Data(B_Colors):
 
     def ppt_export(self, file_type, template_type, org=None):
         """
-            Exports the formatted ppt
+        Exports the formatted ppt
 
-            Parameters
-            ----------
-            file_type : str
-                Determines if the ppt if HPI or L1 org
-            template_type : str
-                Determines which template to use dark or light
-            org : str, optional
-                A flag used to indicate the L1 Org Name (default is
-                None)
+        Parameters
+        ----------
+        file_type : str
+            Determines if the ppt if HPI or L1 org
+        template_type : str
+            Determines which template to use dark or light
+        org : str, optional
+            A flag used to indicate the L1 Org Name (default is
+            None)
 
-            Returns
-            -------
-            list
-                a list of strings used that are the header columns
+        Returns
+        -------
+        list
+            a list of strings used that are the header columns
         """
 
         # determine output file HPI Total or L1 Org Dashboard
