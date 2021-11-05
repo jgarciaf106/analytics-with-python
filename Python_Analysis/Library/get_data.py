@@ -68,20 +68,14 @@ class Get_Data(B_Colors):
 
     def set_path(self, path_type, path):
         """
-            Gets and prints the spreadsheet's header columns
+            Sets paths to specific locations, input, output, queries
 
             Parameters
             ----------
-            file_loc : str
-                The file location of the spreadsheet
-            print_cols : bool, optional
-                A flag used to print the columns to the console (default is
-                False)
-
-            Returns
-            -------
-            list
-                a list of strings used that are the header columns
+            path_type : str
+                Whether the path is for an input, output or query location
+            path : str
+                Path to the specific directory location
         """
 
         if path_type == "output":
@@ -93,20 +87,22 @@ class Get_Data(B_Colors):
 
     def __set_fiscal_year(self, f_year="", s_month=11, s_day=1, s_year="previous"):
         """
-            Gets and prints the spreadsheet's header columns
+            Sets the fiscal year to an company's Fiscal start date.
 
             Parameters
             ----------
-            file_loc : str
-                The file location of the spreadsheet
-            print_cols : bool, optional
-                A flag used to print the columns to the console (default is
-                False)
-
-            Returns
-            -------
-            list
-                a list of strings used that are the header columns
+            f_year : int, optional
+                Year when fiscal year starts (default is
+                blank)
+            s_month : int, optional
+                Month when fiscal year starts (default is
+                11)
+            s_day : int, optional
+                Day when fiscal year starts (default is
+                01)
+            s_year : str, optional
+                Point in time when fiscal year starts, same year of previous year (default is
+                previous)
         """
 
         if f_year == "":
@@ -129,20 +125,16 @@ class Get_Data(B_Colors):
     # set engine db
     def __set_engine(self):
         """
-            Gets and prints the spreadsheet's header columns
+            Sets the engine to start querying the specific data base
 
             Parameters
             ----------
-            file_loc : str
-                The file location of the spreadsheet
-            print_cols : bool, optional
-                A flag used to print the columns to the console (default is
-                False)
+            None
 
             Returns
             -------
-            list
-                a list of strings used that are the header columns
+            object
+                details of the database that needs to be query.
         """
         
         credentials = "C:/Users/garciand/OneDrive - HP Inc/Desktop/Python_Analytics/Python_Analysis/Credentials/{0}.json".format(
@@ -180,20 +172,17 @@ class Get_Data(B_Colors):
     # query external file queries
     def external_query(self, query_name):
         """
-            Gets and prints the spreadsheet's header columns
+            Query the database using a external query file.
 
             Parameters
             ----------
-            file_loc : str
-                The file location of the spreadsheet
-            print_cols : bool, optional
-                A flag used to print the columns to the console (default is
-                False)
+            query_name : str
+                The file with the predefined query.
 
             Returns
             -------
-            list
-                a list of strings used that are the header columns
+            dataframe
+                a dataframe with the queried data.
         """
         
         query_path = self.__query_path + "{0}.sql".format(query_name)
@@ -202,43 +191,43 @@ class Get_Data(B_Colors):
         return pd.read_sql_query(query, self.__engine)
 
     # query inline queries
-    def internal_query(self, query):
+    def internal_query(self, query_name):
         """
-            Gets and prints the spreadsheet's header columns
+            Query the database using an inline query or query variable.
 
             Parameters
             ----------
-            file_loc : str
-                The file location of the spreadsheet
-            print_cols : bool, optional
-                A flag used to print the columns to the console (default is
-                False)
+            query_name : str
+                The file with the predefined query.
 
             Returns
             -------
-            list
-                a list of strings used that are the header columns
+            dataframe
+                a dataframe with the queried data.
         """
         
-        return pd.read_sql_query(query, self.__engine)
+        return pd.read_sql_query(query_name, self.__engine)
 
     # read  files
     def file_query(self, file_name, engine_reader="", read_sheet=0):
         """
-            Gets and prints the spreadsheet's header columns
+            Reads an external excel file to get the data
 
             Parameters
             ----------
-            file_loc : str
-                The file location of the spreadsheet
-            print_cols : bool, optional
-                A flag used to print the columns to the console (default is
-                False)
+            file_name : str
+                The file name that needs to be read.
+            engine_reader : str, optional
+                If a a different engine reader is neeed to open the file (default is
+                Blank)
+            read_sheet : [str, int], optional
+                Indicates which sheet to read by Sheet name or Index position (default is
+                index 0)
 
             Returns
             -------
-            list
-                a list of strings used that are the header columns
+            dataframe
+                a dataframe with the queried data.
         """
         
         file = self.__input_path + file_name
@@ -252,20 +241,17 @@ class Get_Data(B_Colors):
     # trims whitespaces
     def column_trim(self, df):
         """
-            Gets and prints the spreadsheet's header columns
+            Trims any trailing spaces on string dataframe colums
 
             Parameters
             ----------
-            file_loc : str
-                The file location of the spreadsheet
-            print_cols : bool, optional
-                A flag used to print the columns to the console (default is
-                False)
+            df : dataframe
+                The dataframe that needs column tims
 
             Returns
             -------
-            list
-                a list of strings used that are the header columns
+            datafram
+                a dataframe with all column strings trimmed
         """
         
         trim_strings = lambda x: x.strip() if isinstance(x, str) else x
@@ -273,20 +259,16 @@ class Get_Data(B_Colors):
 
     def __password_tracker(self, request_date, file_name, password):
         """
-            Gets and prints the spreadsheet's header columns
+            Stores a password for all password protected files in a tracker
 
             Parameters
             ----------
-            file_loc : str
-                The file location of the spreadsheet
-            print_cols : bool, optional
-                A flag used to print the columns to the console (default is
-                False)
-
-            Returns
-            -------
-            list
-                a list of strings used that are the header columns
+            request_date : date
+                The date when the request was process
+            file_name : string
+                The request file's name
+            password : string
+                The password to open the file
         """
         
         app = xw.App(visible=False)
@@ -308,39 +290,30 @@ class Get_Data(B_Colors):
         app.quit()
 
     # delete existing file
-    def __file_cleaner(self, file):
+    def __file_cleaner(self, file_name):
         """
-            Gets and prints the spreadsheet's header columns
+            Deletes any old file before storing an updated file
 
             Parameters
             ----------
-            file_loc : str
-                The file location of the spreadsheet
-            print_cols : bool, optional
-                A flag used to print the columns to the console (default is
-                False)
-
-            Returns
-            -------
-            list
-                a list of strings used that are the header columns
+            file_name : str
+                The file location and name to be deleted
         """
         
-        if os.path.exists(file):
-            os.remove(file)
+        if os.path.exists(file_name):
+            os.remove(file_name)
 
     # password share after email sent    
     def __password_share(self, password, email_subject):
         """
-            Gets and prints the spreadsheet's header columns
+            Replies to a sent email with the file password.
 
             Parameters
             ----------
-            file_loc : str
-                The file location of the spreadsheet
-            print_cols : bool, optional
-                A flag used to print the columns to the console (default is
-                False)
+            password : str
+                The file's password
+            email_subject : str
+                Subject of the last email to ensure the password is sent only to that email.
 
             Returns
             -------
@@ -357,20 +330,24 @@ class Get_Data(B_Colors):
     # save email to outlook drafts
     def __draft_email(self, recipient, file_name, password, folder_search=""):        
         """
-            Gets and prints the spreadsheet's header columns
+            Creates a draft email to be sent with the report atteched.
 
             Parameters
             ----------
-            file_loc : str
-                The file location of the spreadsheet
-            print_cols : bool, optional
-                A flag used to print the columns to the console (default is
-                False)
+            recipient : str
+                Email address of the person that should get the email
+            file_name : str
+                The file location and name to be attached
+            password : str
+                The password to open the file
+            folder_search : str, optional
+                Determines in which email folder the last email is stores (default is
+                Blank)
 
             Returns
             -------
-            list
-                a list of strings used that are the header columns
+            None
+                define a null variable or an object
         """
         
         # instantiate outlook to get received Items
@@ -461,20 +438,22 @@ class Get_Data(B_Colors):
     # save formatted file
     def __file_saver(self, data, file_name, protect_file, draft_email, requester, email_folder):
         """
-            Gets and prints the spreadsheet's header columns
+            Saves a formatted excel file
 
             Parameters
             ----------
-            file_loc : str
-                The file location of the spreadsheet
-            print_cols : bool, optional
-                A flag used to print the columns to the console (default is
-                False)
-
-            Returns
-            -------
-            list
-                a list of strings used that are the header columns
+            data : dataframe
+                The datafram that needs to be stored to excel
+            file_name : str
+                The file name for the excel file
+            protect_file : str
+                Flag to determine if the file has to be password protected
+            draft_email : str
+                Flag to determine if an email draft is needed
+            requester : str
+                email address if an email draft has to sent
+            email_folder : str
+                Email folder where the last email is stored
         """
         
         # default password
@@ -526,15 +505,27 @@ class Get_Data(B_Colors):
     # export file to folder
     def export_data(self, odf, custom_filename="", protect_file="No", draft_email="No", requester="", email_folder=""):
         """
-            Gets and prints the spreadsheet's header columns
+            Calls other functions to export the data.
 
             Parameters
             ----------
-            file_loc : str
-                The file location of the spreadsheet
-            print_cols : bool, optional
-                A flag used to print the columns to the console (default is
-                False)
+            odf : dataframe
+                The dataframe that needs to be stored.
+            custom_filename : str, optional
+                A custome file name for the file to be stored (default is
+                Blank)
+            protect_file : str, optional
+                A flag used to determine if file has to password protected(default is
+                No)
+            draft_email : str, optional
+                A flag used to determine if a draft email is neeed (default is
+                No)
+            requester : str, optional
+                Email address for the requester (default is
+                Blank)
+            email_folder : str, optional
+                Email folder where the last email is stored (default is
+                Blank)
 
             Returns
             -------
@@ -554,20 +545,14 @@ class Get_Data(B_Colors):
 
     def ppt_analyzer(self, input, output):
         """
-            Gets and prints the spreadsheet's header columns
+            Analize a power point presentation to indicatate each of ppt elements
 
             Parameters
             ----------
-            file_loc : str
-                The file location of the spreadsheet
-            print_cols : bool, optional
-                A flag used to print the columns to the console (default is
-                False)
-
-            Returns
-            -------
-            list
-                a list of strings used that are the header columns
+            input : str
+                The ppt template directory location and name
+            output : str
+                The file output to avoid overwrite the original template
         """
         
         prs = Presentation(input)
@@ -598,24 +583,18 @@ class Get_Data(B_Colors):
 
     def ppt_identifier(self, input, slide_number):
         """
-            Gets and prints the spreadsheet's header columns
+            Identifies a ppt single slide elements
 
             Parameters
             ----------
-            file_loc : str
-                The file location of the spreadsheet
-            print_cols : bool, optional
-                A flag used to print the columns to the console (default is
-                False)
-
-            Returns
-            -------
-            list
-                a list of strings used that are the header columns
+            input : str
+                The ppt template directory location and name
+            slide_number : int
+                The slide number 
         """
         
         prs = Presentation(input)
-        slide = prs.slides[slide_number]
+        slide = prs.slides[slide_number - 1]
         for shape in slide.shapes:
             print(
                 "id: %s, name: %s, , type: %s"
@@ -624,15 +603,17 @@ class Get_Data(B_Colors):
 
     def ppt_export(self, file_type, template_type, org=None):
         """
-            Gets and prints the spreadsheet's header columns
+            Exports the formatted ppt
 
             Parameters
             ----------
-            file_loc : str
-                The file location of the spreadsheet
-            print_cols : bool, optional
-                A flag used to print the columns to the console (default is
-                False)
+            file_type : str
+                Determines if the ppt if HPI or L1 org
+            template_type : str
+                Determines which template to use dark or light
+            org : str, optional
+                A flag used to indicate the L1 Org Name (default is
+                None)
 
             Returns
             -------
